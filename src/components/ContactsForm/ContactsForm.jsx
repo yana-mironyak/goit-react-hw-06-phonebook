@@ -1,7 +1,9 @@
 import { Formik, Form, Field, ErrorMessage } from 'formik';
-import PropTypes from 'prop-types';
 import * as yup from 'yup';
 import css from '../ContactsForm/ContactsForm.module.css';
+import { nanoid } from "nanoid";
+import { useSelector, useDispatch } from "react-redux";
+import { addContact, getContactsItem } from "redux/contactsSlice";
 
 const phoneRegExp = /\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}/;
 
@@ -10,8 +12,21 @@ const schema = yup.object().shape({
   number: yup.string().matches(phoneRegExp, 'Phone number must be digits and can contain spaces, dashes, parentheses and can start with +').required(),
 })
 
-const ContactsForm = ({ initialValues, onSubmit }) => {
-    return <Formik initialValues={initialValues} validationSchema={schema} onSubmit={onSubmit}>
+const ContactsForm = () => {
+    const dispatch = useDispatch();
+    const contacts = useSelector(getContactsItem);
+
+    const handleSubmit = ({ name, number }, { resetForm }) => {
+        const id = nanoid();
+        const contactsMatch = contacts.find(contact => contact.name.toLowerCase() === name.toLowerCase());
+        if (contactsMatch) {
+            alert(`${name} is already in contacts`);
+        } else {
+            dispatch(addContact({ name, number, id }));
+            resetForm();}
+  };
+
+    return <Formik initialValues={{name: '', number: ''}} validationSchema={schema} onSubmit={handleSubmit}>
         <Form autoComplete='on'>
         <label className={css.contact} htmlFor='name'>
             Name
@@ -30,11 +45,4 @@ const ContactsForm = ({ initialValues, onSubmit }) => {
 
 export default ContactsForm;
 
-ContactsForm.propTypes = {
-    initialValues: PropTypes.shape({
-        name: PropTypes.string.isRequired,
-        number: PropTypes.string.isRequired,
-    }),
-    onSubmit: PropTypes.func.isRequired,
-}
 
